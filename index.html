@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الكنوز العربية - Noon Sakinah & Tanween</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none;
+        }
+        header {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .score-board {
+            font-size: 1.3rem;
+            background: #ff9800;
+            color: #000;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+        #game-container {
+            width: 90%;
+            max-width: 800px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 3px solid #38bdf8;
+            border-radius: 20px;
+            margin-top: 30px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+            position: relative;
+        }
+        .alien-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 1px dashed #38bdf8;
+        }
+        .alien-avatar {
+            font-size: 4rem;
+            margin-left: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .alien-speech {
+            font-size: 1.15rem;
+            text-align: right;
+            line-height: 1.6;
+        }
+        .stage { display: none; }
+        .stage.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* المرحلة 1: الجواهر */
+        .gems-grid {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+        .gem {
+            font-size: 3.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 50%;
+        }
+        .gem:hover { transform: scale(1.2); }
+
+        /* المرحلة 2: معمل أحكام النون الساكنة والتنوين */
+        .beakers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        .beaker {
+            padding: 20px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: transform 0.2s;
+            border: 2px solid #fff;
+            direction: ltr;
+        }
+        .beaker:hover { transform: translateY(-5px); }
+        .izhar-beaker { background: #0284c7; color: white; }
+        .idgham-beaker { background: #9333ea; color: white; }
+        .iqlab-beaker { background: #ea580c; color: white; }
+        .ikhfa-beaker { background: #16a34a; color: white; }
+
+        /* المرحلة 3: النفق */
+        .tunnel-box {
+            background: #0f172a;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #a855f7;
+            position: relative;
+        }
+        .en-question {
+            font-size: 1.25rem;
+            color: #38bdf8;
+            direction: ltr;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .quran-word {
+            font-size: 3.5rem;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        button.btn {
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        button.btn:hover { background: #0284c7; color: white; }
+        .rule-btn {
+            background: #1e293b;
+            color: #fff;
+            border: 2px solid #38bdf8;
+            padding: 15px;
+            font-size: 1.05rem;
+            border-radius: 10px;
+            cursor: pointer;
+            direction: ltr;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+        .rule-btn:hover { background: #38bdf8; color: #000; }
+
+        /* نافذة الوجه التفاعلي (الكرتوني / الوحش) */
+        #reaction-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #reaction-emoji {
+            font-size: 8rem;
+            animation: popIn 0.4s ease-out;
+        }
+        #reaction-text {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 15px;
+            direction: ltr;
+        }
+        .shake { animation: shakeAnim 0.5s; }
+        .bounce { animation: bounceAnim 0.6s infinite alternate; }
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shakeAnim {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-15px); }
+            40%, 80% { transform: translateX(15px); }
+        }
+        @keyframes bounceAnim {
+            from { transform: translateY(0); }
+            to { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🚀 الكنوز العربية | Noon Sakinah & Tanween</h1>
+    <div class="score-board">الجواهر: <span id="gems-count">0</span> 💎</div>
+</header>
+
+<!-- شاشة رد الفعل (الوجه الكرتوني أو الوحش) -->
+<div id="reaction-overlay">
+    <div id="reaction-emoji"></div>
+    <div id="reaction-text"></div>
+</div>
+
+<div id="game-container">
+    <!-- الكائن الفضائي المرشد -->
+    <div class="alien-box">
+        <div class="alien-avatar">👽</div>
+        <div class="alien-speech" id="alien-text">
+            أهلاً بك يا بطل! أنا صديقك الفضائي <b>نور (Noor)</b>. ساعدني في جمع 5 جواهر لنفتح مختبر <b>أحكام النون الساكنة والتنوين (Noon Sakinah & Tanween)</b>!
+        </div>
+    </div>
+
+    <!-- المرحلة الأولى: جمع الجواهر -->
+    <div id="stage-1" class="stage active">
+        <h2>المرحلة 1: كوكب الجواهر والكنوز 🪐</h2>
+        <p>اضغط على الجواهر لجمعها وإصلاح محرك المركبة:</p>
+        <div class="gems-grid" id="gems-area">
+            <div class="gem" onclick="collectGem(this)">💎</div>
+            <div class="gem" onclick="collectGem(this)">💠</div>
+            <div class="gem" onclick="collectGem(this)">🔮</div>
+            <div class="gem" onclick="collectGem(this)">💎</div>
+            <div class="gem" onclick="collectGem(this)">💠</div>
+        </div>
+        <button class="btn" id="next-to-lab" style="display:none;" onclick="goToStage(2)">انتقل إلى معمل النون الساكنة 🧪</button>
+    </div>
+
+    <!-- المرحلة الثانية: معمل أحكام النون الساكنة والتنوين -->
+    <div id="stage-2" class="stage">
+        <h2>المرحلة 2: معمل النون الساكنة والتنوين 🧪</h2>
+        <p>اضغط على كل أنبوب ليشرح لك "نور" الحكم وحروفه باللغة الإنجليزية:</p>
+        <div class="beakers-grid">
+            <div class="beaker izhar-beaker" onclick="learnRule('izhar')">1. Izhar<br>(الإظهار الحلقي)</div>
+            <div class="beaker idgham-beaker" onclick="learnRule('idgham')">2. Idgham<br>(الإدغام)</div>
+            <div class="beaker iqlab-beaker" onclick="learnRule('iqlab')">3. Iqlab<br>(الإقلاب)</div>
+            <div class="beaker ikhfa-beaker" onclick="learnRule('ikhfa')">4. Ikhfa<br>(الإخفاء الحقيقي)</div>
+        </div>
+        <button class="btn" id="next-to-tunnel" style="display:none;" onclick="goToStage(3)">ادخل إلى نفق الاختبار 🚇</button>
+    </div>
+
+    <!-- المرحلة الثالثة: النفق وتعلم الأحكام -->
+    <div id="stage-3" class="stage">
+        <h2>المرحلة 3: نفق أحكام النون الساكنة والتنوين 🚇</h2>
+        <div class="tunnel-box">
+            <div class="en-question" id="question-text"></div>
+            <div class="quran-word" id="word-display"></div>
+            <div class="options-grid" id="options-area"></div>
+        </div>
+    </div>
+
+    <!-- شاشة النهاية -->
+    <div id="stage-win" class="stage">
+        <h2>🎉 مبروك يا بطل التجويد! 🎉</h2>
+        <p style="font-size: 1.3rem;">لقد أتقنت أحكام النون الساكنة والتنوين وجمعت كل الكنوز!</p>
+        <button class="btn" onclick="location.reload()">العب مرة أخرى 🔄</button>
+    </div>
+</div>
+
+<script>
+    let gems = 0;
+    let learnedRules = new Set();
+    let currentQuestion = 0;
+
+    // وجوه كرتونية مضحكة للإجابة الصحيحة
+    const funnyFaces = ['🥳', '🤩', '🤪', '🤓', '🦸‍♂️', '🤡'];
+    // وجوه وحوش للإجابة الخاطئة
+    const monsterFaces = ['👾', '👹', '🦖', '🧟‍♂️', '👺', '🐉'];
+
+    // أسئلة أحكام النون الساكنة والتنوين باللغة الإنجليزية
+    const questions = [
+        {
